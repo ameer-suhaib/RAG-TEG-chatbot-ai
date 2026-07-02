@@ -1,1 +1,4 @@
 .env
+.storage
+#add app storage folder to the gitignore
+app/storage
