@@ -1,51 +1,78 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from crawl4ai import AsyncWebCrawler
 
+from .crawl_mananger import (
+    get_browser_config,
+    get_crawler_run_config,
+)
 from .models import CrawledPage
 from .storage import CrawlStorage
 from .url_discovery import URLDiscovery
 
-
 logger = logging.getLogger(__name__)
-
 
 
 class CrawlerService:
     def __init__(self):
         self.discovery = URLDiscovery()
         self.storage = CrawlStorage()
+        self.browser_config = get_browser_config()
+        self.run_config = get_crawler_run_config()
 
     async def crawl(self) -> list[CrawledPage]:
         urls = await self.discovery.discover()
 
-        logger.info(f"Discovered URL {urls}")
+        logger.info("Discovered %d URLs", len(urls))
 
-        pages = []
+        pages: list[CrawledPage] = []
+        failed_pages = 0
 
-        async with AsyncWebCrawler() as crawler:
-            for url in urls:
-                logger.info(f"Crawling url {url}")
+        async with AsyncWebCrawler(config=self.browser_config) as crawler:
+
+            for index, url in enumerate(urls, start=1):
+
+                logger.info("[%d/%d] Crawling %s", index, len(urls), url)
 
                 try:
-                    result =await crawler.arun(url)
-
-                    #build response
-                    page = CrawledPage(
-                        url = url,
-                        title = result.metadata.get("title") if result.metadata else None,
-                        markdown=result.markdown if result.markdown else None,
-                        html = result.html if result.html else None,
-                        status_code=200,
-                        success=True,
-                        crawled_at=datetime.utcnow()
+                    result = await crawler.arun(
+                        url=url,
+                        config=self.run_config,
                     )
+
+                    if not result.success:
+                        logger.warning(
+                            "Failed crawling %s: %s",
+                            url,
+                            result.error_message,
+                        )
+                        failed_pages += 1
+                        continue
+
+                    page = CrawledPage(
+                        url=url,
+                        title=result.metadata.get("title") if result.metadata else None,
+                        markdown=result.markdown.fit_markdown if result.markdown else None,
+                        html=result.html,
+                        status_code=result.status_code,
+                        success=result.success,
+                        crawled_at=datetime.now(timezone.utc),
+                    )
+
                     self.storage.save(page)
                     pages.append(page)
-                except Exception as e:
-                    logger.exception("Failed crawling %s", url)
-                    raise
-        logger.info("Successfully crawled %s pages", len(pages))
 
+
+                except Exception:
+                    logger.exception("Failed crawling %s", url)
+                    failed_pages += 1
+            
+
+        logger.info(
+            "Crawl completed. Success=%d Failed=%d",
+            len(pages),
+            failed_pages,
+        )
         return pages
+
