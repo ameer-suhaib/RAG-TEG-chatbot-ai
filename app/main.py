@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import logging
-from .api.v1.routes import router as crawlrouter
+from app.api.v1.routes import router as crawlrouter
 
 from app.core.logger import setup_logging
 

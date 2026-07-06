@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 import logging
 
 from crawl4ai import AsyncWebCrawler
@@ -11,6 +12,14 @@ from .models import CrawledPage
 from .storage import CrawlStorage
 from .url_discovery import URLDiscovery
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parents[2]
+RAW_HTML_DIR = BASE_DIR / "storage" / "raw_html"
+print(RAW_HTML_DIR, "dirrrrrrrrr")
+
+def has_existing_data() -> bool:
+    return RAW_HTML_DIR.exists() and any(RAW_HTML_DIR.iterdir())
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,7 +30,14 @@ class CrawlerService:
         self.browser_config = get_browser_config()
         self.run_config = get_crawler_run_config()
 
-    async def crawl(self) -> list[CrawledPage]:
+    async def crawl(self, force_refresh: bool = False) -> list[CrawledPage]:
+
+        print(force_refresh,has_existing_data(),"checkkkkkkkkkkkk" )
+        if not force_refresh and has_existing_data():
+            print("enterrrr")
+            logger.info("Raw crawl data already exists. Skipping crawl.")
+            return self.storage.load_all()
+        print("not entered.....")
         urls = await self.discovery.discover()
 
         logger.info("Discovered %d URLs", len(urls))
@@ -75,4 +91,3 @@ class CrawlerService:
             failed_pages,
         )
         return pages
-

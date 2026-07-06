@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
-
+import logging
 from .models import CrawledPage
+
+logger = logging.getLogger(__name__)
 
 class CrawlStorage:
     def __init__(self):
@@ -21,3 +23,21 @@ class CrawlStorage:
                 indent=4,
                 ensure_ascii=False,
             )
+
+    def load_all(self) -> list[CrawledPage]:
+        """
+        Load all previously crawled pages from storage.
+        """
+
+        pages: list[CrawledPage] = []
+
+        for file in self.output.glob("*.json"):
+
+            with open(file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            pages.append(CrawledPage.model_validate(data))
+
+        logger.info("Loaded %d crawled pages from storage.", len(pages))
+
+        return pages

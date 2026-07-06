@@ -1,6 +1,6 @@
 from crawl4ai import (CrawlerRunConfig, BrowserConfig, PruningContentFilter, DefaultMarkdownGenerator, CacheMode)
 
-# Factory method
+# factory-based design
 ##responsible for creating crawler configuration objects.
 
 
