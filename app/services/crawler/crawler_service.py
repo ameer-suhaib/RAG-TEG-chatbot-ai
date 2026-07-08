@@ -32,12 +32,10 @@ class CrawlerService:
 
     async def crawl(self, force_refresh: bool = False) -> list[CrawledPage]:
 
-        print(force_refresh,has_existing_data(),"checkkkkkkkkkkkk" )
+        print(force_refresh,has_existing_data())
         if not force_refresh and has_existing_data():
-            print("enterrrr")
             logger.info("Raw crawl data already exists. Skipping crawl.")
             return self.storage.load_all()
-        print("not entered.....")
         urls = await self.discovery.discover()
 
         logger.info("Discovered %d URLs", len(urls))

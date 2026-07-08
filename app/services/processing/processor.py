@@ -23,7 +23,8 @@ class ProcessingService:
 
         cleaned = self.cleaner.clean(page.markdown or "")
 
-        language = self.language_detector.detect(str(page.url))
+        language = self.language_detector.detect(cleaned)
+        print(language,"-----------language")
 
         document = self.chunker.chunk(
             page = page,

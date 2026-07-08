@@ -6,6 +6,7 @@ from .models import (
     ProcessedChunk,
     ProcessedChunkDocument
 )
+import uuid
 
 
 class DocumentChunker:
@@ -23,7 +24,13 @@ class DocumentChunker:
         chunks : list[ProcessedChunk] = []
 
         for index, text in enumerate(texts):
-            chunk_id = hashlib.sha256(f"{page.url}_{index}".encode()).hexdigest()
+            # Deterministic UUID based on URL + chunk index + chunk content
+            chunk_id = str(
+                uuid.uuid5(
+                    uuid.NAMESPACE_URL,
+                    f"{page.url}|{index}|{text}",
+                )
+            )
 
             chunks.append(
                 ProcessedChunk(

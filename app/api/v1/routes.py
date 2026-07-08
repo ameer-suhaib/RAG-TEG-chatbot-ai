@@ -6,7 +6,7 @@ from app.services.processing import ProcessingService
 router = APIRouter()
 
 
-
+#crawling
 @router.post('/start')
 async def start_ingestion():
     print("---start_ingestion")
@@ -17,6 +17,7 @@ async def start_ingestion():
         "pages": len(pages)
     }
 
+#crawling processing language detect, chunking, embedding, saving(qdrant)
 @router.post("/ingest")
 async def ingest():
     service = IngestionService()

@@ -1,4 +1,4 @@
-from urllib.parse import urlparse
+from lingua import Language, LanguageDetectorBuilder
 
 
 
@@ -11,10 +11,13 @@ class LanguageDetector:
         ga
     """
     @staticmethod
-    def detect(url: str) -> str:
-        path = urlparse(url).path.lower()
+    def detect(cleaned_text: str) -> str:
+        detector = LanguageDetectorBuilder.from_languages(
+            Language.ENGLISH,
+            Language.IRISH
+        ).build()
 
-        if "/ga/" in path:
+        language = detector.detect_language_of(cleaned_text)
+        if language.name == 'IRISH':
             return "ga"
-
         return "en"
