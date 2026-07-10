@@ -29,7 +29,7 @@ class IngestionService:
         logger.info("===== starting ingestion pipeline======")
 
         ## step 1 : crawl website
-        pages = await self.crawler.crawl(force_refresh=False)
+        pages = await self.crawler.crawl(force_refresh=True)
         logger.info("Crawled %d pages", len(pages))
 
         ## step 2: Process pages

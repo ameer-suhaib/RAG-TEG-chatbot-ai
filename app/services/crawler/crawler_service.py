@@ -54,7 +54,7 @@ class CrawlerService:
                         url=url,
                         config=self.run_config,
                     )
-
+                    
                     if not result.success:
                         logger.warning(
                             "Failed crawling %s: %s",
@@ -63,6 +63,9 @@ class CrawlerService:
                         )
                         failed_pages += 1
                         continue
+                    print(result.markdown.fit_markdown[:3000], "--markk")
+                    with open("sample.md", "w", encoding="utf-8") as f:
+                        f.write(result.markdown.fit_markdown)
 
                     page = CrawledPage(
                         url=url,

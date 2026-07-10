@@ -60,4 +60,21 @@ class QdrantService:
             wait=True,
             points=points,
         )
+
+    
+    def search(self, query_vector : list[float], language: str, limit : int = 5, score_threshold : float = 0.35):
+        return self.client.query_points(
+            collection_name=self.collection,
+            query=query_vector,
+            limit=limit,
+            score_threshold=score_threshold,
+            query_filter=models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="language",
+                        match=models.MatchValue(value=language) #filtering by language
+                    )
+                ]
+            )
+        )
     
