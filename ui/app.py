@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import uuid
 
 API_URL = "http://localhost:8002/app/v1"
 
@@ -17,6 +18,20 @@ st.caption("Poweres by RAG + LangGraph")
 ### Side bar ####
 
 st.sidebar.title("Knowladge Base")
+
+
+if "thread_id" not in st.session_state:
+
+    st.session_state.thread_id = str(
+        uuid.uuid4()
+    )
+
+st.sidebar.caption(f"thread_id: `{st.session_state.thread_id}`")
+
+if st.sidebar.button("New chat"):
+    st.session_state.thread_id = str(uuid.uuid4())
+    st.session_state.messages = []
+    st.rerun()
 
 if st.sidebar.button("Start Ingestion"):
     with st.spinner("Building knowladge base..."):
@@ -42,32 +57,43 @@ for message in st.session_state.messages:
 prompt = st.chat_input("Ask about TEG..")
 
 if prompt:
+
     st.session_state.messages.append(
         {
             "role": "user",
-            "content":prompt
+            "content": prompt
         }
     )
 
-with st.chat_message("user"):
-    st.markdown(prompt)
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-with st.chat_message("assistant"):
-    placeholder = st.empty()
-    placeholder.markdown("Thinking...")
+    with st.chat_message("assistant"):
 
-    #
-    #Later this call / chat
-    #
+        placeholder = st.empty()
+        placeholder.markdown("Thinking...")
 
-    response = {
-        "answer": "Chat endpoint not implemented yet."
-    }
-    placeholder.markdown(response["answer"])
+        response = requests.post(
+            f"{API_URL}/chat",
+            json={
+                "question": prompt,
+                "thread_id":st.session_state.thread_id
+            },
+            timeout=120
+        )
 
-st.session_state.messages.append(
-    {
-        "role":"assistence",
-        "content": response["answer"]
-    }
-)
+        if response.ok:
+            data = response.json()
+            answer = data["answer"]
+
+            placeholder.markdown(answer)
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": answer
+                }
+            )
+
+        else:
+            placeholder.error(response.text)

@@ -1,7 +1,7 @@
 import logging
+from typing import Any
 
 from app.services.chat.models import Citation
-from app.services.processing.models import ProcessedChunk
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +19,19 @@ class CitationService:
 
     def build(
         self,
-        chunks: list[ProcessedChunk],
+        chunks: list[Any],
     ) -> list[Citation]:
 
         citations: list[Citation] = []
         seen_urls: set[str] = set()
 
         for chunk in chunks:
-
-            url = str(chunk.url)
+            if isinstance(chunk, dict):
+                url = str(chunk["url"])
+                title = chunk["title"]
+            else:
+                url = str(chunk.url)
+                title = chunk.title
 
             if url in seen_urls:
                 continue
@@ -36,7 +40,7 @@ class CitationService:
 
             citations.append(
                 Citation(
-                    title=chunk.title,
+                    title=title,
                     url=url,
                 )
             )

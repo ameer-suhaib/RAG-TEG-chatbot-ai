@@ -1,81 +1,60 @@
 import logging
-from re import L
 
-from langchain_core.messages import Citation
+from langchain_core.messages import HumanMessage
 
-from app.services.chat.models import ChatRequest, ChatResponse
-from app.services.citation.citation_service import CitationService
-from app.services.llm.llm_service import LLMService
-from app.services.retrieval.prompt_builder import PromptBuilder
-from app.services.retrieval.retrieval_service import RetrievalService
+from app.services.chat.models import ChatRequest, ChatResponse, Citation
+
+
+
+from app.services.graph.workflow import build_graph
 
 logger = logging.getLogger(__name__)
 
 
 class ChatService:
-    """
-    Orchestrates the complete RAG pipeline.
 
-    Flow
-
-        User Question
-              │
-              ▼
-        Retrieval Service
-              │
-              ▼
-        Prompt Builder
-              │
-              ▼
-          LLM Service
-              │
-              ▼
-       Citation Service
-              │
-              ▼
-         Chat Response
-
-    This class intentionally contains no business logic.
-    """
     def __init__(self):
-        self.retriever = RetrievalService()
-        self.prompt_builder = PromptBuilder()
-        self.llm = LLMService()
-        self.citation_service  = CitationService()
+        self.graph = build_graph()
 
 
     async def chat(self, request: ChatRequest) -> ChatResponse:
-        logger.info("Starting chat pipeline")
-        #retrieve relavent document
-        retrieval_result = self.retriever.retrieve(
-            request.question
-        )
-        if not retrieval_result.chunks:
-            logger.warning("No relavent documemnt found")
-            return ChatResponse(
-                answer=(
-                    "sorry i counld not find any relavent "
-                    "information on the TEG website"
-                ),
-                citations=[]
-            )
-        logger.info("Retrieved %d chunks", len(retrieval_result.chunks))
-
-        #build prompt
-        system_prompt, user_prompt = self.prompt_builder.build(retrieval_result)
-
-        #generate answer
-        answer =await self.llm.generate(system_prompt, user_prompt)
-
-        #build citation
-        citations = self.citation_service.build(retrieval_result.chunks)
         logger.info(
-            "Generated %d citations",
-            len(citations)
+            "Starting chat pipeline for thread_id=%s",
+            request.thread_id,
+        )
+        config = {
+            "configurable": {
+                "thread_id": request.thread_id
+            }
+        }
+
+        # Verify checkpoint memory for this thread
+        existing = await self.graph.aget_state(config)
+        prior_count = len(existing.values.get("messages", [])) if existing.values else 0
+        logger.info(
+            "Loaded %d prior messages from InMemorySaver for thread %s",
+            prior_count,
+            request.thread_id,
         )
 
-        #return reponse
+        result = await self.graph.ainvoke(
+            {
+                "messages": [
+                    HumanMessage(content=request.question)
+                ]
+            },
+            config=config,
+        )
+        answer = result["messages"][-1].content
+        logger.info(
+            "Thread %s now has %d total messages",
+            request.thread_id,
+            len(result["messages"]),
+        )
         return ChatResponse(
             answer=answer,
-            citations=citations
+            citations=[
+                Citation(**c)
+                for c in result.get("citations", [])
+            ]
         )

@@ -63,14 +63,17 @@ class CrawlerService:
                         )
                         failed_pages += 1
                         continue
-                    print(result.markdown.fit_markdown[:3000], "--markk")
+
+                    print("RAW MARKDOWN")
+                    print(result.markdown.raw_markdown[:2000])
+
                     with open("sample.md", "w", encoding="utf-8") as f:
-                        f.write(result.markdown.fit_markdown)
+                        f.write(result.markdown.raw_markdown)
 
                     page = CrawledPage(
                         url=url,
                         title=result.metadata.get("title") if result.metadata else None,
-                        markdown=result.markdown.fit_markdown if result.markdown else None,
+                        markdown=result.markdown.raw_markdown if result.markdown else None,
                         html=result.html,
                         status_code=result.status_code,
                         success=result.success,

@@ -20,6 +20,7 @@ class ProcessingService:
     # process single page
     def process_page(self, page: CrawledPage) -> ProcessedChunkDocument:
         logger.info("Processing %s", page.url)
+        logger.info("Raw markdown:\n%s", page.markdown[:3000])
 
         cleaned = self.cleaner.clean(page.markdown or "")
 

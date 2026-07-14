@@ -55,12 +55,17 @@ class IngestionService:
             )
         ## step 4 - Generate embeddings
         texts = [chunk.content for chunk in chunks]
+        logger.info("list of chunks in texts len: %d", len(texts))
+        logger.info("Embedding started")
         embeddings = self.embedding.embed_documents(texts)
+        logger.info("Embedding ended")
 
         logger.info("Generated %d embeddings", len(embeddings))
 
         ## step 5 - store in qdrant
         self.qdrant.create_collection()
+        logger.info("===Create collection ended===")
+        logger.info("===inserting into qdrant vector===")
 
         self.qdrant.upsert_chunks(
             chunks = chunks,

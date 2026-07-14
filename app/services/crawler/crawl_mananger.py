@@ -54,6 +54,6 @@ def get_crawler_run_config() -> CrawlerRunConfig:
         remove_overlay_elements=True,
         process_iframes=False,
         scan_full_page=True,
-        wait_until="networkidle",
+        wait_until="domcontentloaded",
         page_timeout=30000,
     )

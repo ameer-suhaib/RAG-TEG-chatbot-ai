@@ -1,6 +1,13 @@
+import logging
+
 from qdrant_client import models
 from .qdrant_manager import get_qdrant_client
 from app.services.processing.models import ProcessedChunk
+
+logger = logging.getLogger(__name__)
+
+# Qdrant rejects HTTP payloads larger than 32 MB; batch to stay under the limit.
+UPSERT_BATCH_SIZE = 100
 
 class QdrantService:
     def __init__(self):
@@ -55,11 +62,19 @@ class QdrantService:
                 )
             )
 
-        self.client.upsert(
-            collection_name=self.collection,
-            wait=True,
-            points=points,
-        )
+        for start in range(0, len(points), UPSERT_BATCH_SIZE):
+            batch = points[start : start + UPSERT_BATCH_SIZE]
+            self.client.upsert(
+                collection_name=self.collection,
+                wait=True,
+                points=batch,
+            )
+            logger.info(
+                "Upserted batch %d–%d of %d points",
+                start + 1,
+                start + len(batch),
+                len(points),
+            )
 
     
     def search(self, query_vector : list[float], language: str, limit : int = 5, score_threshold : float = 0.35):

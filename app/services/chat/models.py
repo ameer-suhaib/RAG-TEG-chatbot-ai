@@ -3,7 +3,7 @@ from pydantic import BaseModel, HttpUrl
 
 class ChatRequest(BaseModel):
     question : str
-
+    thread_id: str
 
 class Citation(BaseModel):
     title : str
