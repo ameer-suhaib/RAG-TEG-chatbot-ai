@@ -1,13 +1,19 @@
-from langgraph.graph import StateGraph, START, END
+"""Compile the RAG chat graph with in-memory thread checkpointing."""
 
-from .state import ChatState
-from .nodes import GraphNodes
+from langgraph.graph import END, START, StateGraph
+
 from .memory import memory
+from .nodes import GraphNodes
+from .state import ChatState
 
 
 def build_graph():
-    nodes = GraphNodes()
+    """Build: START → retrieve → prompt → llm → citation → END.
 
+    The InMemorySaver checkpointer stores ``ChatState.messages`` per thread_id
+    so follow-up questions keep conversation history.
+    """
+    nodes = GraphNodes()
     builder = StateGraph(ChatState)
 
     builder.add_node("retrieve", nodes.retrieval_node)
