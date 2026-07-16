@@ -39,9 +39,9 @@ if st.sidebar.button("Start Ingestion"):
 
         if response.status_code == 200:
             st.sidebar.success("Knowladge base updated")
-            st.sidebar.json(response.json)
+            st.sidebar.json(response.json())
         else:
-            st.sidebar.error(response.text)    
+            st.sidebar.error(response.text)
 
 
 # ------------------------
@@ -69,31 +69,38 @@ if prompt:
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-
         placeholder = st.empty()
-        placeholder.markdown("Thinking...")
+        answer = ""
 
-        response = requests.post(
-            f"{API_URL}/chat",
-            json={
-                "question": prompt,
-                "thread_id":st.session_state.thread_id
-            },
-            timeout=120
-        )
+        try:
+            with requests.post(
+                f"{API_URL}/chat",
+                json={
+                    "question": prompt,
+                    "thread_id": st.session_state.thread_id,
+                },
+                stream=True,
+                timeout=120,
+            ) as response:
+                if not response.ok:
+                    placeholder.error(response.text)
+                else:
+                    for chunk in response.iter_content(
+                        chunk_size=None,
+                        decode_unicode=True,
+                    ):
+                        if chunk:
+                            answer += chunk
+                            placeholder.markdown(answer + "▌")
 
-        if response.ok:
-            data = response.json()
-            answer = data["answer"]
+                    placeholder.markdown(answer)
 
-            placeholder.markdown(answer)
-
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": answer
-                }
-            )
-
-        else:
-            placeholder.error(response.text)
+                    if answer:
+                        st.session_state.messages.append(
+                            {
+                                "role": "assistant",
+                                "content": answer,
+                            }
+                        )
+        except requests.RequestException as exc:
+            placeholder.error(f"Request failed: {exc}")

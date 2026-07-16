@@ -15,7 +15,6 @@ from .url_discovery import URLDiscovery
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[2]
 RAW_HTML_DIR = BASE_DIR / "storage" / "raw_html"
-print(RAW_HTML_DIR, "dirrrrrrrrr")
 
 def has_existing_data() -> bool:
     return RAW_HTML_DIR.exists() and any(RAW_HTML_DIR.iterdir())

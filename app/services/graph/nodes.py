@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from langchain_core.messages import AIMessage, HumanMessage
@@ -20,7 +21,7 @@ class GraphNodes:
         self.llm = LLMService()
         self.citation_service = CitationService()
 
-    def retrieval_node(self, state: ChatState):
+    async def retrieval_node(self, state: ChatState):
         question = state["messages"][-1].content
         prior_user = [
             m.content
@@ -37,7 +38,12 @@ class GraphNodes:
             str(search_query)[:200],
         )
 
-        retrieval_result = self.retrieval.retrieve(search_query, top_k=5)
+        # Embedding + Qdrant are CPU/network bound — run off the event loop
+        retrieval_result = await asyncio.to_thread(
+            self.retrieval.retrieve,
+            search_query,
+            5,
+        )
         return {
             "retrieval_result": retrieval_result.model_dump(mode="json"),
             "chunks": [
@@ -57,7 +63,6 @@ class GraphNodes:
         }
 
     async def llm_node(self, state: ChatState):
-        # Prior turns from InMemorySaver (exclude current user message)
         history = state["messages"][:-1][-MAX_HISTORY_MESSAGES:]
         logger.info(
             "Calling LLM with %d prior messages from thread memory",

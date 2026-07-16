@@ -15,7 +15,6 @@ class ChatState(TypedDict):
     citations:  list[dict[str, Any]]
     retrieval_result: Any
     system_prompt: str
-
     user_prompt: str
 
 

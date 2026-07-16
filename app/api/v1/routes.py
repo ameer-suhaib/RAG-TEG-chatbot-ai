@@ -1,9 +1,10 @@
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+
 from app.services.chat.chat_service import ChatService
 from app.services.chat.models import ChatRequest
 from app.services.crawler.crawler_service import CrawlerService
 from app.services.ingestion.ingestion_service import IngestionService
-from app.services.processing import ProcessingService
 
 router = APIRouter()
 
@@ -15,7 +16,7 @@ chat_service = ChatService()
 async def start_ingestion():
     print("---start_ingestion")
     crawler_service = CrawlerService()
-    pages =await crawler_service.crawl()
+    pages = await crawler_service.crawl()
     return {
         "status": "success",
         "pages": len(pages)
@@ -28,8 +29,10 @@ async def ingest():
     return await service.run()
 
 
-#chat
+#chat (streaming)
 @router.post('/chat')
 async def chat(request: ChatRequest):
-    print("enter into chat api")
-    return await chat_service.chat(request)
+    return StreamingResponse(
+        chat_service.stream_chat(request),
+        media_type="text/plain; charset=utf-8",
+    )
