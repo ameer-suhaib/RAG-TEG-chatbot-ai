@@ -1,5 +1,6 @@
 import logging
 from collections.abc import AsyncIterator
+from typing import Any
 
 from langchain_core.messages import (
     AIMessage,
@@ -8,6 +9,7 @@ from langchain_core.messages import (
     SystemMessage,
 )
 from langchain_openai import ChatOpenAI
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -59,13 +61,14 @@ class LLMService:
         system_prompt: str,
         user_prompt: str,
         history: list[BaseMessage] | None = None,
+        config: dict[str, Any] | None = None,
     ) -> str:
         logger.info(
             "Sending prompt to LLM with %d history messages",
             len(history or []),
         )
         messages = self._build_messages(system_prompt, user_prompt, history)
-        response = await self.llm.ainvoke(messages)
+        response = await self.llm.ainvoke(messages, config=config)
         logger.info("LLM response received.")
         return response.content.strip()
 
@@ -74,6 +77,7 @@ class LLMService:
         system_prompt: str,
         user_prompt: str,
         history: list[BaseMessage] | None = None,
+        config: dict[str, Any] | None = None,
     ) -> AsyncIterator[str]:
         logger.info(
             "Streaming prompt to LLM with %d history messages",
@@ -81,7 +85,7 @@ class LLMService:
         )
         messages = self._build_messages(system_prompt, user_prompt, history)
 
-        async for chunk in self.llm.astream(messages):
+        async for chunk in self.llm.astream(messages, config=config):
             token = chunk.content
             if isinstance(token, str) and token:
                 yield token

@@ -15,3 +15,5 @@ class CrawledPage(BaseModel):
     status_code : int
     success : bool
     crawled_at : datetime
+    filename: str | None = None
+    document_type: str = "html"

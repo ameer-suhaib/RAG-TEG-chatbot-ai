@@ -1,8 +1,16 @@
+"""FastAPI entrypoint for the TEG RAG backend."""
+
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
 import asyncio
 import logging
+
+# Enable LangSmith before any LangChain / LangGraph imports.
+from app.core.tracing import setup_langsmith
+
+setup_langsmith()
+
+from fastapi import FastAPI
 
 from app.api.v1.routes import router as crawlrouter
 from app.core.logger import setup_logging
@@ -33,11 +41,11 @@ app = FastAPI(title="TEG-RAG Bakend", version="1.0.0", lifespan=lifespan)
 
 app.include_router(
     crawlrouter,
-    prefix="/app/v1"
+    prefix="/app/v1",
 )
 
 
-@app.get('/health')
+@app.get("/health")
 def health_test():
     logger.info("Health check api calling...")
     return {"message": "hello world!!"}

@@ -19,6 +19,7 @@ Rules:
 - If you cannot answer from history or Context, say so.
 - Answer in the same language as the user.
 - When using Context, include citations.
+- If the user's question is unrelated to TEG, politely respond that you are the official TEG AI assistant and can only help with TEG-related information available on the website. You may respond to simple greetings and conversational pleasantries (e.g., "hi", "thank you", "bye"), but do not answer general knowledge or unrelated questions.
 """
 
         context = "\n\n".join(

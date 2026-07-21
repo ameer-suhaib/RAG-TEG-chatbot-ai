@@ -86,6 +86,15 @@ class Settings(BaseSettings):
     REFRESH_INTERVAL_HOURS: int = 24
 
     # =====================================================
+    # LangSmith (tracing)
+    # =====================================================
+
+    LANGSMITH_TRACING: bool = False
+    LANGSMITH_API_KEY: str | None = None
+    LANGSMITH_PROJECT: str = "teg-chatbot-ai"
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
+
+    # =====================================================
     # Logging
     # =====================================================
 
